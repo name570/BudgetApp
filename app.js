@@ -12,7 +12,14 @@
         this.description = description;
         this.value = value;
     };
+    var calcualteTotal = function(type){
+        var sum = 0;
+        data.allItems[type].forEach(function(cur){
+            sum += cur.value;
+        });
+        data.totals[type] = sum;
 
+    };
     var data = {
         allItems:{
             exp:[],
@@ -21,7 +28,9 @@
         totals:{
             exp: 0,
             inc: 0
-        }
+        },
+        budget: 0,
+        precentage: -1
     };
 
     return {
@@ -42,6 +51,29 @@
             } 
             data.allItems[type].push(newItem);
             return newItem;
+         },
+         calculateBudget: function(){
+             //calculate total incomes and expenses
+            calcualteTotal('exp');
+            calcualteTotal('inc');
+
+             //calculate the budget: incomes - expenses
+            data.budget = data.totals.inc - data.totals.exp;
+             //calcualte the precentage of income that we spent
+            if (data.totals.inc > 0){
+                data.precentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            } else{
+                data.precentage = -1;
+            }
+         },
+
+         getBudget: function(){
+             return {
+                 budget: data.budget,
+                 totalIncome: data.totals.inc,
+                 totalExpenses: data.totals.exp,
+                 precentage: data.precentage 
+             }
          },
          testing: function(){
             console.log(data);
@@ -132,10 +164,11 @@
     var updateBudget = function(){
 
         // 1. Calculate budget
-
+        budgetCtlr.calculateBudget();
         // 2. Return budget
-
+        var budget = budgetCtlr.getBudget(); 
         // 3. Display budget 
+        console.log(budget);
 
     };
 
@@ -145,7 +178,7 @@
         // 1. Get the field input data
         input = UICtrl.getInput();
 
-        if (input.description !== "" && !isNaN(input.value) && input.value > 0){
+        if (input.description !== "" && !isNaN(input.value) && input.value > 0){ 
         // 2. Add the item to the budget controller
         newItem = budgetCtlr.addItem(input.type, input.description, input.value);
 
