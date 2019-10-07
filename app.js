@@ -5,6 +5,20 @@
         this.id = id;
         this.description = description;
         this.value = value;
+        this.precentage = -1;
+    };
+
+    Expense.prototype.calcPrecentage = function(totalIncome){
+        if (totalIncome > 0){
+            this.precentage = Math.round((this.value / totalIncome)*100);
+        } else {
+            this.precentage = -1;
+        }
+    
+    };
+
+    Expense.prototype.getPrecentage = function(){
+        return this.precentage;
     };
 
     var Income = function(id, description, value){
@@ -66,6 +80,19 @@
                 data.precentage = -1;
             }
          },
+
+         calculatePrecentages: function(){
+             data.allItems.exp.forEach(function(curr){
+                curr.calcPrecentage(data.totals.inc);
+             });
+       },
+
+       getPrecentages: function(){
+            var allPerc = data.allItems.exp.map(function(cur){
+                return cur.getPrecentage();
+            });
+            return allPerc;
+       },
 
          deleteItem: function(type, id){
             var ids, index;
@@ -144,6 +171,12 @@
             document.querySelector(element).insertAdjacentHTML('beforeend',newHtml);
 
           },
+
+          deleteListItem: function(selectorID){
+            var element;
+            element = document.getElementById(selectorID);
+            element.parentNode.removeChild(element);
+          },
           clearFields: function(){
             var fields, fieldsArr; 
             fields = document.querySelectorAll(DOMStrings.inputDescription + ', ' + DOMStrings.inputValue);
@@ -198,6 +231,17 @@
 
     };
 
+    var updatePrecentages = function(){
+        var percentages;
+        //1. Calculate precentages
+        budgetCtlr.calculatePrecentages();
+        //2. Read them from budget controller
+        percentages = budgetCtlr.getPrecentages();
+        //3. Update the UI with new precentages
+        console.log(percentages);
+
+    };
+
     var ctrlAddItem = function() {
         // TO DO LIST
         var input;
@@ -215,6 +259,9 @@
         UIController.clearFields();
         // 5. Calculate and update budget
         updateBudget();
+
+        //6. Update precentages
+        updatePrecentages();
         }
     };
 
@@ -230,8 +277,11 @@
             // 1. delete the item from the data structure
             budgetCtlr.deleteItem(type,ID); 
             // 2. delete the item from UI 
-
+            UICtrl.deleteListItem(itemID);
             // 3. update and show the new budget 
+            updateBudget();
+            //4. Update precentages
+            updatePrecentages();
 
         }
     };
