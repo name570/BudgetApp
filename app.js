@@ -134,9 +134,36 @@
         incomeLabel: '.budget__income--value',
         expenseLabel: '.budget__expenses--value',
         precentageLabel: '.budget__expenses--percentage',
-        container: '.container'
-
+        container: '.container',
+        expensesPercLabel: '.item__percentage'
      };
+     var formatNumber = function(number, type){
+        var numSplit, int, dec, acc;
+        number = Math.abs(number);
+        number = number.toFixed(2);
+
+        numSplit = number.split('.');
+        int = numSplit[0];
+        acc = int.substr(0,int.length % 3);
+        for(i = int.length % 3; i <= int.length; i += 3){
+            var currItem = int.substr(i,3);
+            if (acc === ""){
+                acc += currItem;
+            } else if (currItem !== ""){
+                acc += ',' + int.substr(i, 3);
+            }
+        }
+        int = acc; 
+        // if (int.length > 3){
+        //     int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3); 
+        // }
+        dec = numSplit[1];
+
+
+        return (type === 'exp' ?'-' : '+') + ' ' + int + '.' + dec;
+
+    };
+
       return {
           getInput: function(){
 
@@ -165,7 +192,7 @@
             // Replace the placeholder text with some actual data
             newHtml = html.replace('%id%', obj.id);
             newHtml = newHtml.replace('%description%', obj.description);
-            newHtml = newHtml.replace('%value%', obj.value);
+            newHtml = newHtml.replace('%value%', formatNumber(obj.value, type));
             
             // Insert HTML into the DOM
             document.querySelector(element).insertAdjacentHTML('beforeend',newHtml);
@@ -187,16 +214,38 @@
             fieldsArr[0].focus();
             },
           displayBudget: function(obj){
-            document.querySelector(DOMStrings.budgetLabel).textContent = obj.budget;
-            document.querySelector(DOMStrings.incomeLabel).textContent = obj.totalIncome;
-            document.querySelector(DOMStrings.expenseLabel).textContent = obj.totalExpenses;
+            var type;
+
+            obj.budget > 0 ? type = 'inc' : type = 'exp'
+            document.querySelector(DOMStrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+            document.querySelector(DOMStrings.incomeLabel).textContent = formatNumber(obj.totalIncome,'inc');
+            document.querySelector(DOMStrings.expenseLabel).textContent = formatNumber(obj.totalExpenses, 'exp');
+
             if (obj.precentage > 0){
             document.querySelector(DOMStrings.precentageLabel).textContent = obj.precentage + '%' ;
             } else{
-                document.querySelector(DOMStrings.precentageLabel).textContent = '--- '
+                document.querySelector(DOMStrings.precentageLabel).textContent = '---'
             }
             }, 
-          getDOMStrings: function(){
+            displayPrecentages: function(percentages){
+                var fields,  nodeListForEach;
+                fields = document.querySelectorAll(DOMStrings.expensesPercLabel);
+                nodeListForEach = function(list, callback){
+                    for(var i = 0; i < list.length; i++){
+                        callback(list[i], i);
+                    }
+                };
+                nodeListForEach(fields, function(current, index){
+                    if (percentages[index] > 0){
+                        current.textContent = percentages[index] + '%';
+                    } else {
+                        current.textContent = '---';
+                    }
+                });
+
+            },
+            
+            getDOMStrings: function(){
               return DOMStrings; 
           }
       };
@@ -232,13 +281,13 @@
     };
 
     var updatePrecentages = function(){
-        var percentages;
+        var  percentages;
         //1. Calculate precentages
         budgetCtlr.calculatePrecentages();
         //2. Read them from budget controller
         percentages = budgetCtlr.getPrecentages();
         //3. Update the UI with new precentages
-        console.log(percentages);
+        UICtrl.displayPrecentages(percentages);
 
     };
 
